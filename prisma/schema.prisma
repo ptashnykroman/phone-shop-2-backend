@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GUEST
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  MOCK
+  CARD
+  CASH_ON_DELIVERY
+}
+
+enum DeliveryType {
+  COURIER
+  PICKUP
+}
+
+enum AlternativeReasonType {
+  CHEAPER_SIMILAR
+  SLIGHTLY_MORE_EXPENSIVE_BETTER
+  BETTER_CAMERA
+  BETTER_BATTERY
+  BETTER_PERFORMANCE
+  BEST_VALUE
+}
+
+enum AlternativeRuleType {
+  CHEAPER_SIMILAR
+  SLIGHTLY_MORE_EXPENSIVE_BETTER
+  BETTER_CAMERA
+  BETTER_BATTERY
+  BETTER_PERFORMANCE
+  BEST_VALUE
+}
+
+model User {
+  id               String     @id @default(uuid()) @db.Uuid
+  email            String     @unique
+  passwordHash     String
+  refreshTokenHash String?
+  firstName        String
+  lastName         String
+  phone            String?    @unique
+  role             Role       @default(USER)
+  isActive         Boolean    @default(true)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  cart             Cart?
+  orders           Order[]
+  reviews          Review[]
+  favorites        Favorite[]
+
+  @@index([role, isActive])
+}
+
+model Brand {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@index([name])
+}
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@index([name])
+}
+
+model Product {
+  id                 String               @id @default(uuid()) @db.Uuid
+  name               String
+  slug               String               @unique
+  description        String               @db.Text
+  shortDescription   String
+  price              Decimal              @db.Decimal(10, 2)
+  oldPrice           Decimal?             @db.Decimal(10, 2)
+  stock              Int                  @default(0)
+  sku                String               @unique
+  color              String?
+  images             String[]             @default([])
+  isActive           Boolean              @default(true)
+  deletedAt          DateTime?
+  ratingAverage      Decimal              @default(0) @db.Decimal(3, 2)
+  reviewCount        Int                  @default(0)
+  brandId            String               @db.Uuid
+  categoryId         String               @db.Uuid
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  brand              Brand                @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  category           Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  specifications     ProductSpecification[]
+  performanceScore   PerformanceScore?
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+  reviews            Review[]
+  favorites          Favorite[]
+  alternativesFrom   ProductAlternative[] @relation("AlternativesFrom")
+  alternativesTo     ProductAlternative[] @relation("AlternativesTo")
+
+  @@index([brandId, categoryId, isActive])
+  @@index([categoryId, price])
+  @@index([deletedAt])
+  @@index([ratingAverage])
+  @@index([createdAt])
+}
+
+model ProductSpecification {
+  id           String    @id @default(uuid()) @db.Uuid
+  productId    String    @db.Uuid
+  groupName    String
+  key          String
+  label        String
+  value        String
+  numericValue Decimal?  @db.Decimal(12, 4)
+  unit         String?
+  importance   Int       @default(5)
+  isComparable Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, key])
+  @@index([productId, groupName])
+  @@index([key, numericValue])
+  @@index([isComparable])
+}
+
+model CharacteristicExplanation {
+  id                  String   @id @default(uuid()) @db.Uuid
+  specificationKey    String   @unique
+  label               String
+  shortExplanation    String   @db.Text
+  detailedExplanation String   @db.Text
+  practicalImpact     String   @db.Text
+  example             String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([label])
+}
+
+model PerformanceScore {
+  id                String   @id @default(uuid()) @db.Uuid
+  productId         String   @unique @db.Uuid
+  everydayUseScore  Int
+  gamingScore       Int
+  cameraScore       Int
+  multitaskingScore Int
+  batteryScore      Int
+  displayScore      Int
+  longTermUseScore  Int
+  overallScore      Int
+  explanation       String   @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([overallScore])
+}
+
+model Cart {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String?    @unique @db.Uuid
+  sessionId String?    @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  @@index([updatedAt])
+}
+
+model CartItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  cartId    String   @db.Uuid
+  productId String   @db.Uuid
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId])
+  @@index([productId])
+}
+
+model Order {
+  id              String        @id @default(uuid()) @db.Uuid
+  userId          String        @db.Uuid
+  status          OrderStatus   @default(PENDING)
+  totalPrice      Decimal       @db.Decimal(10, 2)
+  deliveryType    DeliveryType
+  deliveryAddress String
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentMethod @default(MOCK)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items           OrderItem[]
+
+  @@index([userId, createdAt])
+  @@index([status, paymentStatus])
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @db.Uuid
+  productId   String   @db.Uuid
+  productName String
+  price       Decimal  @db.Decimal(10, 2)
+  quantity    Int
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Review {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  productId  String   @db.Uuid
+  rating     Int
+  text       String   @db.Text
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId, isApproved])
+}
+
+model Favorite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  productId String   @db.Uuid
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+model AlternativeRule {
+  id          String              @id @default(uuid()) @db.Uuid
+  name        String
+  type        AlternativeRuleType
+  description String              @db.Text
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([type, isActive])
+}
+
+model ProductAlternative {
+  id                   String                @id @default(uuid()) @db.Uuid
+  sourceProductId      String                @db.Uuid
+  alternativeProductId String                @db.Uuid
+  reasonType           AlternativeReasonType
+  score                Decimal               @db.Decimal(5, 2)
+  title                String
+  explanation          String                @db.Text
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  sourceProduct        Product               @relation("AlternativesFrom", fields: [sourceProductId], references: [id], onDelete: Cascade)
+  alternativeProduct   Product               @relation("AlternativesTo", fields: [alternativeProductId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceProductId, alternativeProductId, reasonType])
+  @@index([sourceProductId, reasonType])
+}
