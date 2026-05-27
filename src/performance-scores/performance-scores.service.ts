@@ -249,13 +249,13 @@ export class PerformanceScoresService {
 
   private buildExplanation(snapshot: ScoreSnapshot): string {
     const categoryLabels: Record<ScoreField, string> = {
-      everydayUseScore: 'everyday use',
-      gamingScore: 'gaming',
-      cameraScore: 'camera',
-      multitaskingScore: 'multitasking',
-      batteryScore: 'battery',
-      displayScore: 'display',
-      longTermUseScore: 'long-term value',
+      everydayUseScore: 'щоденне використання',
+      gamingScore: 'ігри',
+      cameraScore: 'камера',
+      multitaskingScore: 'багатозадачність',
+      batteryScore: 'автономність',
+      displayScore: 'екран',
+      longTermUseScore: 'довгострокове використання',
     };
 
     const entries = Object.entries(categoryLabels).map(([key, label]) => ({
@@ -267,9 +267,9 @@ export class PerformanceScoresService {
     const strongest = [...entries].sort((a, b) => b.value - a.value).slice(0, 2);
     const weakest = [...entries].sort((a, b) => a.value - b.value)[0];
 
-    return `Strengths: ${strongest
+    return `Сильні сторони: ${strongest
       .map((entry) => `${entry.label} (${entry.value}/100)`)
-      .join(', ')}. Weakest area: ${weakest.label} (${weakest.value}/100). Overall balance: ${snapshot.overallScore}/100.`;
+      .join(', ')}. Найслабше місце: ${weakest.label} (${weakest.value}/100). Загальна оцінка: ${snapshot.overallScore}/100.`;
   }
 
   private createEmptySnapshot(): ScoreSnapshot {
@@ -283,7 +283,7 @@ export class PerformanceScoresService {
       longTermUseScore: 50,
       overallScore: 50,
       explanation:
-        'Not enough technical data for a detailed calculation, so a neutral score was applied.',
+        'Недостатньо технічних даних для детального розрахунку, тому застосовано нейтральну оцінку.',
     };
   }
 

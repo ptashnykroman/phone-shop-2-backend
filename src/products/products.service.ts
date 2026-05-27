@@ -93,7 +93,7 @@ export class ProductsService {
       });
 
       if (duplicate) {
-        throw new ConflictException('Product with the same slug or SKU already exists');
+        throw new ConflictException('Продукт з таким slug або SKU вже існує');
       }
     }
 
@@ -176,7 +176,7 @@ export class ProductsService {
       });
 
       if (!product) {
-        throw new NotFoundException('Product not found');
+        throw new NotFoundException('Товар не знайдено');
       }
 
       return product;
@@ -195,7 +195,7 @@ export class ProductsService {
       });
 
       if (!product) {
-        throw new NotFoundException('Product not found');
+        throw new NotFoundException('Товар не знайдено');
       }
 
       return product;
@@ -208,10 +208,14 @@ export class ProductsService {
       query.maxPrice !== undefined &&
       query.minPrice > query.maxPrice
     ) {
-      throw new BadRequestException('minPrice must be less than or equal to maxPrice');
+      throw new BadRequestException(
+        'мінімальна ціна повинна бути меншою або дорівнювати максимальній ціні',
+      );
     }
 
-    const specificationFilters = parseSpecificationFilters(query.specifications);
+    const specificationFilters = parseSpecificationFilters(
+      query.specifications,
+    );
     const search = query.search?.trim();
 
     const where: Prisma.ProductWhereInput = {
@@ -226,7 +230,9 @@ export class ProductsService {
           ? { in: query.categoryIds }
           : undefined,
       color:
-        query.colors && query.colors.length > 0 ? { in: query.colors } : undefined,
+        query.colors && query.colors.length > 0
+          ? { in: query.colors }
+          : undefined,
       stock: query.inStock ? { gt: 0 } : undefined,
       price:
         query.minPrice !== undefined || query.maxPrice !== undefined
@@ -311,13 +317,17 @@ export class ProductsService {
           where: { id: productId, deletedAt: null },
           include: {
             specifications: {
-              orderBy: [{ groupName: 'asc' }, { importance: 'desc' }, { label: 'asc' }],
+              orderBy: [
+                { groupName: 'asc' },
+                { importance: 'desc' },
+                { label: 'asc' },
+              ],
             },
           },
         });
 
         if (!product) {
-          throw new NotFoundException('Product not found');
+          throw new NotFoundException('Товар не знайдено');
         }
 
         const explanations =
@@ -378,7 +388,7 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Товар не знайдено');
     }
 
     return product;
@@ -394,10 +404,14 @@ export class ProductsService {
       },
     });
 
-    return new Map(specifications.map((specification) => [specification.key, specification]));
+    return new Map(
+      specifications.map((specification) => [specification.key, specification]),
+    );
   }
 
-  private buildOrderBy(query: ProductQueryDto): Prisma.ProductOrderByWithRelationInput[] {
+  private buildOrderBy(
+    query: ProductQueryDto,
+  ): Prisma.ProductOrderByWithRelationInput[] {
     switch (query.sortBy) {
       case ProductSortBy.PRICE:
         return [{ price: query.sortOrder }];
@@ -419,11 +433,16 @@ export class ProductsService {
     });
 
     if (duplicate) {
-      throw new ConflictException('Product with the same slug or SKU already exists');
+      throw new ConflictException(
+        'Товар з таким slug або SKU вже існує',
+      );
     }
   }
 
-  private async invalidateProductCache(id: string, slug: string): Promise<void> {
+  private async invalidateProductCache(
+    id: string,
+    slug: string,
+  ): Promise<void> {
     await Promise.all([
       this.cacheService.del(`product:${id}`),
       this.cacheService.del(`product:slug:${slug}`),

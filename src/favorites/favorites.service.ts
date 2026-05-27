@@ -15,7 +15,7 @@ export class FavoritesService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Товар не знайдено');
     }
 
     const existing = await this.prisma.favorite.findFirst({
@@ -26,7 +26,7 @@ export class FavoritesService {
     });
 
     if (existing) {
-      throw new ConflictException('Product is already in favorites');
+      throw new ConflictException('Товар вже у вибраному');
     }
 
     return this.prisma.favorite.create({
@@ -54,7 +54,7 @@ export class FavoritesService {
     });
 
     if (!favorite) {
-      throw new NotFoundException('Favorite not found');
+      throw new NotFoundException('Вибраний товар не знайдено');
     }
 
     await this.prisma.favorite.delete({

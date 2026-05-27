@@ -12,7 +12,7 @@ export class PaymentsService {
     orderOwnerId: string,
   ) {
     if (currentUser.role !== Role.ADMIN && currentUser.id !== orderOwnerId) {
-      throw new ForbiddenException('You do not have access to this payment');
+      throw new ForbiddenException('Ви не маєте доступу до цього платежу');
     }
 
     return this.ordersService.markPaid(orderId);

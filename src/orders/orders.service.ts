@@ -3,12 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  OrderStatus,
-  PaymentStatus,
-  Prisma,
-  Role,
-} from '@prisma/client';
+import { OrderStatus, PaymentStatus, Prisma, Role } from '@prisma/client';
 import { decimalToNumber } from '../common/utils/decimal.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CartService } from '../cart/cart.service';
@@ -25,7 +20,7 @@ export class OrdersService {
   async createOrder(userId: string, dto: CreateOrderDto) {
     const cart = await this.cartService.getOrCreateCart(userId);
     if (cart.items.length === 0) {
-      throw new NotFoundException('Cart is empty');
+      throw new NotFoundException('Кошик порожній');
     }
 
     const totalPrice = cart.items.reduce((sum, item) => {
@@ -36,7 +31,7 @@ export class OrdersService {
       for (const item of cart.items) {
         if (item.product.stock < item.quantity) {
           throw new ForbiddenException(
-            `Product "${item.product.name}" does not have enough stock`,
+            `Товар "${item.product.name}" не має достатньої кількості на складі`,
           );
         }
       }
@@ -103,11 +98,11 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException('Замовлення не знайдено');
     }
 
     if (currentUser.role !== Role.ADMIN && order.userId !== currentUser.id) {
-      throw new ForbiddenException('You do not have access to this order');
+      throw new ForbiddenException('Ви не маєте доступу до цього замовлення');
     }
 
     return order;
@@ -165,7 +160,7 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException('Замовлення не знайдено');
     }
   }
 

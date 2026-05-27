@@ -54,12 +54,15 @@ export class AuthService {
     const user = await this.usersService.findByEmail(dto.email);
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Невірні облікові дані');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Невірні облікові дані');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -74,17 +77,19 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string): Promise<{ user: SafeUser } & AuthTokens> {
+  async refresh(
+    refreshToken: string,
+  ): Promise<{ user: SafeUser } & AuthTokens> {
     const payload = await this.verifyRefreshToken(refreshToken);
     const user = await this.usersService.getRequiredUser(payload.sub);
 
     if (!user.refreshTokenHash) {
-      throw new ForbiddenException('Refresh session is not active');
+      throw new ForbiddenException('Токен оновлення сесії не активний');
     }
 
     const isValid = await bcrypt.compare(refreshToken, user.refreshTokenHash);
     if (!isValid) {
-      throw new ForbiddenException('Refresh token is invalid');
+      throw new ForbiddenException('Токен оновлення недійсний');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -144,7 +149,7 @@ export class AuthService {
           'default-refresh-secret',
       });
     } catch {
-      throw new ForbiddenException('Refresh token is invalid or expired');
+      throw new ForbiddenException('Токен оновлення недійсний або застарілий');
     }
   }
 }

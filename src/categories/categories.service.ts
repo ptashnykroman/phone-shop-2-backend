@@ -16,7 +16,7 @@ export class CategoriesService {
     const slug = dto.slug ? slugify(dto.slug) : slugify(dto.name);
     const existing = await this.prisma.category.findUnique({ where: { slug } });
     if (existing) {
-      throw new ConflictException('Category slug already exists');
+      throw new ConflictException('Slug категорії вже існує');
     }
 
     return this.prisma.category.create({
@@ -37,7 +37,7 @@ export class CategoriesService {
   async findOne(id: string) {
     const category = await this.prisma.category.findUnique({ where: { id } });
     if (!category) {
-      throw new NotFoundException('Category not found');
+      throw new NotFoundException('Категорія не знайдена');
     }
     return category;
   }
@@ -45,7 +45,11 @@ export class CategoriesService {
   async update(id: string, dto: UpdateCategoryDto) {
     await this.findOne(id);
 
-    const slug = dto.slug ? slugify(dto.slug) : dto.name ? slugify(dto.name) : undefined;
+    const slug = dto.slug
+      ? slugify(dto.slug)
+      : dto.name
+        ? slugify(dto.name)
+        : undefined;
 
     if (slug) {
       const existing = await this.prisma.category.findFirst({
@@ -56,7 +60,7 @@ export class CategoriesService {
       });
 
       if (existing) {
-        throw new ConflictException('Category slug already exists');
+        throw new ConflictException('Slug категорії вже існує');
       }
     }
 

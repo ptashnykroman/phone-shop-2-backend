@@ -51,7 +51,7 @@ export class AlternativesService {
       });
 
       if (!source) {
-        throw new NotFoundException('Product not found');
+        throw new NotFoundException('Товар не знайдено');
       }
 
       const sourceScore =
@@ -284,25 +284,25 @@ export class AlternativesService {
   ): string[] {
     const categoryLabels = [
       {
-        label: 'better camera',
+        label: 'краща камера',
         diff: candidateScore.cameraScore - sourceScore.cameraScore,
       },
       {
-        label: 'better battery life',
+        label: 'краща автономність',
         diff: candidateScore.batteryScore - sourceScore.batteryScore,
       },
       {
-        label: 'better performance',
+        label: 'краща продуктивність',
         diff:
           (candidateScore.gamingScore + candidateScore.multitaskingScore) / 2 -
           (sourceScore.gamingScore + sourceScore.multitaskingScore) / 2,
       },
       {
-        label: 'better display',
+        label: 'кращий екран',
         diff: candidateScore.displayScore - sourceScore.displayScore,
       },
       {
-        label: 'better long-term value',
+        label: 'краща довгострокова цінність',
         diff: candidateScore.longTermUseScore - sourceScore.longTermUseScore,
       },
     ];
@@ -314,7 +314,7 @@ export class AlternativesService {
       .map((item) => item.label);
 
     if (priceDifference < 0) {
-      advantages.unshift('lower price');
+      advantages.unshift('нижча ціна');
     }
 
     return advantages.slice(0, 3);
@@ -323,18 +323,32 @@ export class AlternativesService {
   private buildTitle(type: RecommendationType): string {
     switch (type) {
       case 'cheaperSimilar':
-        return 'Similar experience for less money';
+        return 'Схожий досвід за менші гроші';
       case 'slightlyMoreExpensiveBetter':
-        return 'Slightly more expensive, noticeably better';
+        return 'Трохи дорожче, але відчутно краще';
       case 'betterCamera':
-        return 'Better pick for photos and video';
+        return 'Кращий вибір для фото й відео';
       case 'betterBattery':
-        return 'Better pick for battery life';
+        return 'Кращий вибір за автономністю';
       case 'betterPerformance':
-        return 'Better pick for speed and gaming';
+        return 'Кращий вибір для швидкодії та ігор';
       case 'bestValue':
-        return 'Best value for money';
+        return 'Найкраще співвідношення ціни та можливостей';
     }
+  }
+
+  private formatPriceDifference(value: number): string {
+    if (value === 0) {
+      return 'коштує стільки ж';
+    }
+
+    const formattedValue = new Intl.NumberFormat('uk-UA', {
+      maximumFractionDigits: 0,
+    }).format(Math.abs(value));
+
+    return value < 0
+      ? `коштує на ${formattedValue} грн дешевше`
+      : `коштує на ${formattedValue} грн дорожче`;
   }
 
   private buildExplanation(
@@ -349,34 +363,29 @@ export class AlternativesService {
       performanceDiff: number;
     },
   ): string {
-    const pricePart =
-      priceDifference === 0
-        ? 'for the same price'
-        : priceDifference < 0
-          ? `${Math.abs(priceDifference).toFixed(2)} cheaper`
-          : `${priceDifference.toFixed(2)} more expensive`;
+    const pricePart = this.formatPriceDifference(priceDifference);
 
     switch (type) {
       case 'cheaperSimilar':
-        return `${candidateName} delivers a very similar overall experience to ${sourceName}, but is ${pricePart}.`;
+        return `${candidateName} дає дуже схожий загальний досвід до ${sourceName}, але ${pricePart}.`;
       case 'slightlyMoreExpensiveBetter':
-        return `${candidateName} is ${pricePart}, but gives a noticeably stronger overall package (+${Math.round(
+        return `${candidateName} ${pricePart}, але пропонує помітно сильніший загальний рівень (+${Math.round(
           diffs.overallDiff,
-        )} points).`;
+        )} балів).`;
       case 'betterCamera':
-        return `${candidateName} is ${pricePart} and has a meaningfully better camera (+${Math.round(
+        return `${candidateName} ${pricePart} і має помітно кращу камеру (+${Math.round(
           diffs.cameraDiff,
-        )} points).`;
+        )} балів).`;
       case 'betterBattery':
-        return `${candidateName} is ${pricePart} and offers noticeably stronger battery life (+${Math.round(
+        return `${candidateName} ${pricePart} і забезпечує помітно кращу автономність (+${Math.round(
           diffs.batteryDiff,
-        )} points).`;
+        )} балів).`;
       case 'betterPerformance':
-        return `${candidateName} is ${pricePart} and is better for heavy use and gaming (+${Math.round(
+        return `${candidateName} ${pricePart} і краще підходить для високих навантажень та ігор (+${Math.round(
           diffs.performanceDiff,
-        )} points).`;
+        )} балів).`;
       case 'bestValue':
-        return `${candidateName} looks stronger for the money: the value-to-price ratio is better than ${sourceName}.`;
+        return `${candidateName} виглядає вигідніше за свої гроші: співвідношення можливостей до ціни краще, ніж у ${sourceName}.`;
     }
   }
 }

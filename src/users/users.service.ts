@@ -22,7 +22,7 @@ export class UsersService {
     });
 
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Користувач з цією email вже існує');
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
@@ -56,7 +56,7 @@ export class UsersService {
   async getRequiredUser(id: string): Promise<User> {
     const user = await this.findById(id);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Користувач не знайдений');
     }
     return user;
   }
@@ -94,7 +94,7 @@ export class UsersService {
     ]);
 
     return {
-      items: items.map((item) => this.serializeUser(item)),
+      items: items.map((item: User) => this.serializeUser(item)),
       meta: {
         page: params.page,
         limit: params.limit,

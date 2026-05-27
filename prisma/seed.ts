@@ -9,6 +9,7 @@ import {
   Role,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { characteristicExplanationSeeds } from './characteristic-explanations.uk';
 
 const prisma = new PrismaClient();
 
@@ -302,72 +303,7 @@ async function main() {
   }
 
   await prisma.characteristicExplanation.createMany({
-    data: [
-      explanation(
-        'processor_score',
-        'Processor score',
-        'Higher processor score usually means the phone feels faster in demanding tasks.',
-        'This score summarizes raw chipset capability. It affects gaming, multitasking, and how future-proof the phone feels after a few years.',
-        'Strong processors help with gaming, camera processing, and keeping the interface responsive under load.',
-        'If you jump between many apps or play heavy games, this matters a lot.',
-      ),
-      explanation(
-        'ram_gb',
-        'RAM',
-        'More RAM helps the phone keep more apps open without refreshing them.',
-        'RAM is short-term memory. A larger amount improves app switching and reduces reloads when you move between browser tabs, chat apps, and camera.',
-        'Useful for multitasking and long sessions with many apps.',
-        '8 GB is usually comfortable; 12 GB or more is helpful for heavy users.',
-      ),
-      explanation(
-        'battery_mah',
-        'Battery capacity',
-        'A larger battery can help the phone last longer between charges.',
-        'Battery size is not the only thing that matters, but it gives a useful first approximation of stamina when combined with chipset and screen efficiency.',
-        'Important if you travel often, use navigation, or spend long hours away from a charger.',
-        '5000 mAh is common on endurance-focused Android phones.',
-      ),
-      explanation(
-        'refresh_rate',
-        'Refresh rate',
-        '120 Hz usually makes scrolling and animations look smoother than 60 Hz.',
-        'Refresh rate describes how often the screen updates each second. Higher values improve perceived smoothness, especially in scrolling-heavy apps and games.',
-        'Useful for gaming, social apps, and generally smoother UI motion.',
-        'A 120 Hz panel can feel much more fluid than a 60 Hz panel.',
-      ),
-      explanation(
-        'storage_type',
-        'Storage type',
-        'Faster storage helps apps open faster and improves general snappiness.',
-        'Storage speed affects install times, game loading, large file operations, and how quick the system feels during updates or heavy multitasking.',
-        'Important if you care about launch speed and long-term responsiveness.',
-        'UFS 4.0 is noticeably faster than older UFS 2.2 storage.',
-      ),
-      explanation(
-        'camera_main_mp',
-        'Main camera resolution',
-        'More megapixels can help detail, but sensor quality and stabilization matter too.',
-        'Megapixel count alone is not equal to camera quality. Bigger sensors, good stabilization, and strong image processing often matter more than raw resolution.',
-        'Helpful for cropping and daytime detail, but not the whole camera story.',
-        'A 50 MP camera with a better sensor can beat a 200 MP camera in difficult light.',
-      ),
-      explanation(
-        'ois',
-        'Optical image stabilization',
-        'OIS helps reduce blur from shaky hands, especially at night.',
-        'Optical stabilization physically compensates for small hand movements. This improves photos in low light and makes handheld video more stable.',
-        'Useful if you shoot night photos or take a lot of video while moving.',
-        'Phones with OIS often produce cleaner night shots.',
-      ),
-      explanation(
-        'display_type',
-        'Display type',
-        'OLED and AMOLED screens usually offer deeper blacks and stronger contrast than basic LCD panels.',
-        'The panel technology affects contrast, brightness behavior, color punch, and power use depending on the content shown.',
-        'Important for media viewing and perceived screen quality.',
-        'LTPO AMOLED panels can also adapt refresh rate to save battery.',
-      ),
-    ],
+    data: characteristicExplanationSeeds,
   });
 
   await prisma.alternativeRule.createMany({
@@ -507,24 +443,6 @@ function rule(name: string, type: AlternativeRuleType) {
     type,
     description: `${name} rule for alternatives module`,
     isActive: true,
-  };
-}
-
-function explanation(
-  specificationKey: string,
-  label: string,
-  shortExplanation: string,
-  detailedExplanation: string,
-  practicalImpact: string,
-  example: string,
-) {
-  return {
-    specificationKey,
-    label,
-    shortExplanation,
-    detailedExplanation,
-    practicalImpact,
-    example,
   };
 }
 

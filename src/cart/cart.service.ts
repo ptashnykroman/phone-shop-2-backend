@@ -19,11 +19,7 @@ export class CartService {
     return this.serializeCart(cart);
   }
 
-  async addItem(
-    dto: AddCartItemDto,
-    userId?: string,
-    sessionId?: string,
-  ) {
+  async addItem(dto: AddCartItemDto, userId?: string, sessionId?: string) {
     const cart = await this.getOrCreateCart(userId, sessionId);
     const product = await this.prisma.product.findFirst({
       where: {
@@ -34,11 +30,11 @@ export class CartService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Товар не знайдено');
     }
 
     if (product.stock < dto.quantity) {
-      throw new BadRequestException('Requested quantity is not available');
+      throw new BadRequestException('Запитана кількість недоступна');
     }
 
     await this.prisma.cartItem.upsert({
@@ -81,11 +77,11 @@ export class CartService {
     });
 
     if (!item) {
-      throw new NotFoundException('Cart item not found');
+      throw new NotFoundException('Товар у кошику не знайдено');
     }
 
     if (item.product.stock < dto.quantity) {
-      throw new BadRequestException('Requested quantity is not available');
+      throw new BadRequestException('Запитана кількість недоступна');
     }
 
     await this.prisma.cartItem.update({
@@ -106,7 +102,7 @@ export class CartService {
     });
 
     if (!item) {
-      throw new NotFoundException('Cart item not found');
+      throw new NotFoundException('Товар у кошику не знайдено');
     }
 
     await this.prisma.cartItem.delete({ where: { id: itemId } });
@@ -203,7 +199,9 @@ export class CartService {
   }
 
   private serializeCart(
-    cart: Prisma.CartGetPayload<{ include: typeof CartService.prototype.cartInclude }>,
+    cart: Prisma.CartGetPayload<{
+      include: typeof CartService.prototype.cartInclude;
+    }>,
   ) {
     const items = cart.items.map((item) => ({
       id: item.id,

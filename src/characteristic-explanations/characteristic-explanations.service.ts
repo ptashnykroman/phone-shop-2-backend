@@ -18,7 +18,7 @@ export class CharacteristicExplanationsService {
 
     if (existing) {
       throw new ConflictException(
-        'Explanation for this specification key already exists',
+        'Пояснення для цього ключа специфікації вже існує',
       );
     }
 
@@ -64,7 +64,7 @@ export class CharacteristicExplanationsService {
     });
 
     if (!explanation) {
-      throw new NotFoundException('Characteristic explanation not found');
+      throw new NotFoundException('Пояснення характеристики не знайдено');
     }
   }
 }

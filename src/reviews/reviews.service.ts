@@ -21,7 +21,7 @@ export class ReviewsService {
     });
 
     if (!product) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Товар не знайдено');
     }
 
     const existing = await this.prisma.review.findFirst({
@@ -32,7 +32,7 @@ export class ReviewsService {
     });
 
     if (existing) {
-      throw new ConflictException('You have already reviewed this product');
+      throw new ConflictException('Ви вже залишили відгук про цей продукт');
     }
 
     return this.prisma.review.create({
@@ -70,7 +70,7 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException('Відгук не знайдено');
     }
 
     const updated = await this.prisma.review.update({

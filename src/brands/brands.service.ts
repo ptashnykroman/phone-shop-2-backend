@@ -16,7 +16,7 @@ export class BrandsService {
     const slug = dto.slug ? slugify(dto.slug) : slugify(dto.name);
     const existing = await this.prisma.brand.findUnique({ where: { slug } });
     if (existing) {
-      throw new ConflictException('Brand slug already exists');
+      throw new ConflictException('Slug бренду вже існує');
     }
 
     return this.prisma.brand.create({
@@ -38,7 +38,7 @@ export class BrandsService {
   async findOne(id: string) {
     const brand = await this.prisma.brand.findUnique({ where: { id } });
     if (!brand) {
-      throw new NotFoundException('Brand not found');
+      throw new NotFoundException('Бренд не знайдено');
     }
     return brand;
   }
@@ -57,7 +57,7 @@ export class BrandsService {
       });
 
       if (existing) {
-        throw new ConflictException('Brand slug already exists');
+        throw new ConflictException('Slug бренду вже існує');
       }
     }
 

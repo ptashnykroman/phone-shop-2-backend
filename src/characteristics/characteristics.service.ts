@@ -52,7 +52,7 @@ export class CharacteristicsService {
     });
 
     if (!existing) {
-      throw new NotFoundException('Characteristic not found');
+      throw new NotFoundException('Характеристика не знайдена');
     }
 
     const specification = await this.prisma.productSpecification.update({
@@ -82,7 +82,7 @@ export class CharacteristicsService {
     });
 
     if (!existing) {
-      throw new NotFoundException('Characteristic not found');
+      throw new NotFoundException('Характеристика не знайдена');
     }
 
     await this.prisma.productSpecification.delete({ where: { id } });
@@ -97,7 +97,7 @@ export class CharacteristicsService {
     });
 
     if (!exists) {
-      throw new NotFoundException('Product not found');
+      throw new NotFoundException('Товар не знайдено');
     }
   }
 

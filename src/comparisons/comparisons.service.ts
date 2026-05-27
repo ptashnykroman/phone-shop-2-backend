@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PerformanceScore, Product, ProductSpecification } from '@prisma/client';
+import {
+  PerformanceScore,
+  Product,
+  ProductSpecification,
+} from '@prisma/client';
 import { RedisCacheService } from '../common/utils/redis-cache.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PerformanceScoresService } from '../performance-scores/performance-scores.service';
@@ -41,7 +45,7 @@ export class ComparisonsService {
   async compareProducts(productIds: string[]) {
     const uniqueProductIds = Array.from(new Set(productIds));
     if (uniqueProductIds.length < 2 || uniqueProductIds.length > 4) {
-      throw new BadRequestException('You can compare between 2 and 4 products');
+      throw new BadRequestException('Ви можете порівнювати між 2 і 4 товарами');
     }
 
     const cacheKey = `compare:${uniqueProductIds.slice().sort().join(':')}`;
@@ -64,7 +68,7 @@ export class ComparisonsService {
       });
 
       if (products.length !== uniqueProductIds.length) {
-        throw new NotFoundException('One or more products were not found');
+        throw new NotFoundException('Один або більше товарів не знайдено');
       }
 
       const hydratedProducts = await Promise.all(
@@ -72,13 +76,14 @@ export class ComparisonsService {
           ...product,
           performanceScore:
             product.performanceScore ??
-            (await this.performanceScoresService.getOrCreateForProduct(product.id)),
+            (await this.performanceScoresService.getOrCreateForProduct(
+              product.id,
+            )),
         })),
       );
 
-      const comparableSpecifications = this.getComparableSpecifications(
-        hydratedProducts,
-      );
+      const comparableSpecifications =
+        this.getComparableSpecifications(hydratedProducts);
       const groupedSpecifications = this.groupSpecifications(hydratedProducts);
       const highlightedDifferences = this.detectSignificantDifferences(
         hydratedProducts,
@@ -159,13 +164,17 @@ export class ComparisonsService {
 
     return Array.from(grouped.entries()).map(([groupName, items]) => ({
       groupName,
-      items: Array.from(items.values()).sort((a, b) => b.importance - a.importance),
+      items: Array.from(items.values()).sort(
+        (a, b) => b.importance - a.importance,
+      ),
     }));
   }
 
   detectSignificantDifferences(
     products: ComparableProduct[],
-    groupedSpecifications: ReturnType<ComparisonsService['groupSpecifications']>,
+    groupedSpecifications: ReturnType<
+      ComparisonsService['groupSpecifications']
+    >,
   ) {
     const productOrder = products.map((product) => product.id);
 
@@ -173,15 +182,20 @@ export class ComparisonsService {
       .flatMap((group) =>
         group.items.map((item) => {
           const allValues = productOrder.map((productId) => {
-            const value = item.values.find((entry) => entry.productId === productId);
-            return value ?? {
-              productId,
-              productName:
-                products.find((product) => product.id === productId)?.name ?? '',
-              value: 'N/A',
-              numericValue: null,
-              unit: null,
-            };
+            const value = item.values.find(
+              (entry) => entry.productId === productId,
+            );
+            return (
+              value ?? {
+                productId,
+                productName:
+                  products.find((product) => product.id === productId)?.name ??
+                  '',
+                value: 'N/A',
+                numericValue: null,
+                unit: null,
+              }
+            );
           });
 
           const numericValues = allValues
@@ -203,7 +217,8 @@ export class ComparisonsService {
             type === 'numeric'
               ? this.isNumericDifferenceSignificant(item.key, numericValues)
               : type === 'boolean'
-                ? new Set(allValues.map((value) => value.value.toLowerCase())).size > 1
+                ? new Set(allValues.map((value) => value.value.toLowerCase()))
+                    .size > 1
                 : this.isTextDifferenceSignificant(
                     allValues.map((value) => value.value),
                   );
@@ -212,7 +227,9 @@ export class ComparisonsService {
             return null;
           }
 
-          const bestNumeric = numericValues.length ? Math.max(...numericValues) : null;
+          const bestNumeric = numericValues.length
+            ? Math.max(...numericValues)
+            : null;
 
           return {
             groupName: item.groupName,
@@ -297,8 +314,12 @@ export class ComparisonsService {
 
   buildComparisonSummary(
     products: ComparableProduct[],
-    highlightedDifferences: ReturnType<ComparisonsService['detectSignificantDifferences']>,
-    winnerByCategory: ReturnType<ComparisonsService['calculateCategoryWinners']>,
+    highlightedDifferences: ReturnType<
+      ComparisonsService['detectSignificantDifferences']
+    >,
+    winnerByCategory: ReturnType<
+      ComparisonsService['calculateCategoryWinners']
+    >,
   ) {
     const standoutWinners = winnerByCategory
       .filter((entry) => entry.winnerProductIds.length === 1)
@@ -315,12 +336,15 @@ export class ComparisonsService {
       standoutWinners,
       conclusion:
         highlightedDifferences.length === 0
-          ? 'These models are very close overall, so price or design may become the deciding factor.'
-          : `Detected ${highlightedDifferences.length} meaningful differences. Focus first on the categories with a clear winner.`,
+          ? 'Ці моделі дуже схожі загалом, тому ціна або дизайн можуть стати рішучим фактором.'
+          : `Виявлено ${highlightedDifferences.length} значущих відмінностей. Спочатку зверніть увагу на категорії з чітким переможцем.`,
     };
   }
 
-  private isNumericDifferenceSignificant(key: string, values: number[]): boolean {
+  private isNumericDifferenceSignificant(
+    key: string,
+    values: number[],
+  ): boolean {
     if (values.length < 2) {
       return false;
     }
@@ -328,7 +352,8 @@ export class ComparisonsService {
     const max = Math.max(...values);
     const min = Math.min(...values);
     const absoluteDifference = max - min;
-    const relativeDifference = min === 0 ? absoluteDifference : absoluteDifference / min;
+    const relativeDifference =
+      min === 0 ? absoluteDifference : absoluteDifference / min;
 
     const thresholds: Record<string, { absolute: number; relative: number }> = {
       battery_mah: { absolute: 300, relative: 0.08 },
@@ -367,14 +392,14 @@ export class ComparisonsService {
     }>,
   ): string {
     const impactHints: Record<string, string> = {
-      battery_mah: 'can translate into longer battery life',
-      refresh_rate: 'makes scrolling and motion look smoother',
-      ram_gb: 'helps the phone keep more tasks active at once',
-      processor_score: 'can provide noticeably stronger performance',
-      camera_main_mp: 'can improve fine detail in photos',
-      sensor_size: 'can help the camera in tougher lighting',
-      storage_gb: 'gives more room for apps, photos, and video',
-      charging_watts: 'can reduce charging time',
+      battery_mah: 'може перетворитися на довший час автономної роботи',
+      refresh_rate: 'робить прокрутку та рух виглядати плавніше',
+      ram_gb: 'допомагає телефону зберігати більше завдань активними одночасно',
+      processor_score: 'може забезпечити помітно сильніший продуктивність',
+      camera_main_mp: 'може покращити деталізацію фото',
+      sensor_size: 'може допомогти камері у складніших умовах освітлення',
+      storage_gb: 'дає більше місця для додатків, фото та відео',
+      charging_watts: 'може скоротити час зарядки',
     };
 
     if (type === 'numeric') {
@@ -382,8 +407,8 @@ export class ComparisonsService {
         .filter((value) => value.numericValue !== null)
         .sort((a, b) => (b.numericValue ?? 0) - (a.numericValue ?? 0))[0];
 
-      return `${best.productName} has the stronger "${label}" result, which ${
-        impactHints[key] ?? 'can matter in real-world use'
+      return `${best.productName} має найкращий результат "${label}", який ${
+        impactHints[key] ?? 'може мати значення в реальних умовах використання'
       }.`;
     }
 
@@ -392,20 +417,25 @@ export class ComparisonsService {
         ['true', 'tak', 'yes'].includes(value.value.toLowerCase()),
       );
       return available
-        ? `${available.productName} includes "${label}" while not every competitor does.`
-        : `There is a practical difference between the phones for "${label}".`;
+        ? `${available.productName} включає "${label}", тоді як не кожен конкурент має це.`
+        : `Між телефонами є практична різниця для "${label}".`;
     }
 
     const unique = Array.from(new Set(values.map((value) => value.value)));
     const involvedProducts = values
-      .map((value) => products.find((product) => product.id === value.productId)?.name)
+      .map(
+        (value) =>
+          products.find((product) => product.id === value.productId)?.name,
+      )
       .filter((value): value is string => Boolean(value))
       .join(', ');
 
-    return `For "${label}", the models ${involvedProducts} differ: ${unique.join(', ')}.`;
+    return `Для "${label}", моделі ${involvedProducts} відрізняються: ${unique.join(', ')}.`;
   }
 
-  private calculateStorageWinnerScore(specifications: ProductSpecification[]): number {
+  private calculateStorageWinnerScore(
+    specifications: ProductSpecification[],
+  ): number {
     const specificationMap = new Map(
       specifications.map((specification) => [specification.key, specification]),
     );
